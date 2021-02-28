@@ -1,9 +1,9 @@
-import React from 'react'
-import { useCounter } from './useCounter'
+import React, { useContext } from 'react'
+import { CounterContext } from './CounterComposed'
 
 
 const Counter = () => {
-    const counter = useCounter();
+    const counter = useContext(CounterContext);
 
     return (
         <div className="App">
@@ -11,7 +11,7 @@ const Counter = () => {
                 <h1>{counter.value}</h1>
                 <input type="button" value="Incrementar" onClick={() => counter.increment()}  />
             </center>
-        </div>
+            </div>
     );
 }
 
