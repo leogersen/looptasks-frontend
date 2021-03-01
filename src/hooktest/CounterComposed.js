@@ -12,7 +12,6 @@ const CounterComposed = () => {
         <div className="App">
             <CounterContext.Provider value={counter}>
                     <Counter />
-                    <Counter />
             </CounterContext.Provider>
         </div>
     );   
