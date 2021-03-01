@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { createContext, useEffect, useState } from 'react'
+import { createContext, useEffect, useState } from 'react'
 import { AUTH_ENDPOINT, CREDENTIALS_NAME } from '../constants';
 
 
@@ -12,17 +12,19 @@ export const useAuth = () => {
 
 
     useEffect(() => {
-        loadCredentials();}, []);
+        loadCredentials();
+    }, []);
 
-    const login = async (username, password, onLogin) => {
+    const login = async (username, password) => {
         const loginInfo = { username : username, password : password };
         setProcessing(true);
 
         try{
             const response = await axios.post(`${AUTH_ENDPOINT}/login`, loginInfo)
             const token = response.headers['authorization'].replace("Bearer ", "");
-            sessionStorage.setItem(token);
+            storeCredentials(token);
             setProcessing(false);
+
         } catch (error) {
             console.error(error);
             setError("O Login não pode ser realizado");
@@ -39,7 +41,7 @@ export const useAuth = () => {
     }
 
     const storeCredentials = (token) => {
-        const tokenData = atob(token.split(".")[1]);
+        const tokenData = JSON.parse(atob(token.split(".")[1]));
         const credentials = { username: tokenData.sub, displayName: tokenData.displayName, token: token };
         sessionStorage.setItem(CREDENTIALS_NAME, JSON.stringify(credentials));
         setCredentials(credentials);
