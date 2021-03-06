@@ -21,12 +21,21 @@ export const useTasks = () => {
         setProcessing(false);
 
         } catch (error) {
-            console.log(error);
-            setError(error.message);
-            setProcessing(false);
+            handleError(error);
 
              }
         }
+
+        
+    const delete = async (taskToDelete) => {
+        try{
+        await axios
+        .delete(`${API_ENDPOINT}/tasks/${id}`, this.buildAuthHeader())
+        }catch (error) {
+            handleError(error);
+
+        }
+    }
     
     const buildAuthHeader = () => {
         return {
@@ -34,6 +43,19 @@ export const useTasks = () => {
                 "authorization": `Bearer ${auth.credentials.token}`
             }
         }
+    }
+
+    const handleError = (error) => {
+        console.log(error);
+        setError(resp.data.error);
+
+        if (resp && resp.status === 400 && resp.data) {
+            setError(resp.data.error);
+        } else {
+            setError(error.message);
+        }
+
+        setProcessing(false);
     }
 
     return { taskList, error, processing, list} ;
