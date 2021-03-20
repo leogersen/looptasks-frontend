@@ -1,112 +1,52 @@
-import React, { Component } from 'react';
+import React, { useContext, useState } from 'react';
 import { Redirect } from 'react-router-dom';
-import AuthService from '../api/AuthService';
-import TaskService from '../api/TaskService';
-import Spinner from './Spinner';
 import Alert from './Alert';
+import { AuthContext } from '../hooks/useAuth';
+import { useTasks } from '../hooks/useTasks';
 
-class TaskForm extends Component {
-
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            task: {
-                id: 0,
-                description: "",
-                whenToDo: ""
-            },
-            redirect: false,
-            buttomName: "Cadastrar",
-            alert: null,
-            loading: false,
-            saving: false
-
-        }
-
-        this.onSubmitHandler = this.onSubmitHandler.bind(this);
-        this.onInputChangeHandler = this.onInputChangeHandler.bind(this);
-    }
-
-    componentDidMount() {
-        const editId = this.props.match.params.id;
-        if (editId) {
-            this.setState({ loading: true });
-            TaskService.load(~~editId,
-                task => this.setState({ task: task, loading: false, buttomName: "Alterar" }),
-                error => {
-                    if (error.response) {
-                        if (error.response.status === 404) {
-                            this.setErrorState("Tarefa não encontrada");
-                        } else {
-                            this.setErrorState(`Erro ao carregar dados: ${error.response}`);
-                        }
-
-                    } else {
-                        this.setErrorState(`Erro na requisição: ${error.message}`);
-                    }
-                });
-        }
-    }
+const TaskForm = () => {
+    const auth = useContext(AuthContext);
+    const tasks = useTasks();
+    const [task, setTask ] = useState({ id: 0, description: "", whenToDo: "" });
+    const [redirect, setRedirect] = useState(false);
 
 
-    setErrorState(error) {
-        this.setState({ alert: error, loading: false, saving: false })
-    }
 
-
-    onSubmitHandler(event) {
+    const onSubmitHandler = (event) => {
         event.preventDefault();
-        this.setState({ saving: true, alert: null });
-        TaskService.save(this.state.task,
-            () => this.setState({ redirect: true, saving: false }),
-            error => {
-                if (error.response) {
-                    this.setErrorState(`Erro: ${error.response.data.error}`);
-                } else {
-                    this.setErrorState(`Erro na requisição: ${error.message}`);
-                }
-
-            })
-
+        tasks.save(task);
 
     }
 
-    onInputChangeHandler(event) {
+    const onInputChangeHandler = (event) => {
         const field = event.target.name;
         const value = event.target.value;
-        this.setState(prevState => ({ task: { ...prevState.task, [field]: value } }));
-        console.log(this.state.task);
+        setTask({...task, [field]: value});
     }
 
-    render() {
 
-        if (!AuthService.isAuthenticated()) {
+        if (!auth.isAuthenticated()) {
             return <Redirect to="/login" />;
 
         }
 
-        if (this.state.redirect) {
+        if (redirect || tasks.taskUpdated) {
             return <Redirect to="/" />
-        }
-        if (this.state.loading) {
-            return <Spinner />;
-
         }
 
         return (
             <div>
                 <h1>Cadastro da Tarefa</h1>
-                {this.state.alert != null ? <Alert message={this.state.alert} /> : ""}
-                <form onSubmit={this.onSubmitHandler}>
+                {tasks.error && <Alert message={tasks.error} />}
+                <form onSubmit={onSubmitHandler}>
                     <div className="form-group">
                         <label htmlFor="description">Descrição</label>
                         <input type="text"
                             className="form-control"
                             name="description"
-                            value={this.state.task.description}
+                            value={task.description}
                             placeholder="Digite a descrição"
-                            onChange={this.onInputChangeHandler} />
+                            onChange={onInputChangeHandler} />
 
                     </div>
                     <div className="form-group">
@@ -114,21 +54,21 @@ class TaskForm extends Component {
                         <input type="date"
                             className="form-control"
                             name="whenToDo"
-                            value={this.state.task.whenToDo}
+                            value={task.whenToDo}
                             placeholder="Informe a data"
-                            onChange={this.onInputChangeHandler} />
+                            onChange={onInputChangeHandler} />
                     </div>
                     <br />
                     <button
                         type="submit"
                         className="btn btn-primary"
-                        disabled={this.state.saving}>
+                        disabled={tasks.processing}>
 
                         {
-                            this.state.saving ?
+                            tasks.processing ?
                             <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
 
-                                : this.state.buttomName
+                                : task.id === 0 ? "Gravar" : "Alterar"
 
                         }
 
@@ -137,13 +77,13 @@ class TaskForm extends Component {
                     <button
                         type="button"
                         className="btn btn-primary"
-                        onClick={() => this.setState({ redirect: true })}>
+                        disabled={tasks.processing}
+                        onClick={() => setRedirect(true)}>
                         Cancelar
-                    </button>
+                        </button>
                 </form>
             </div>
         );
-    }
 }
 
 export default TaskForm;
