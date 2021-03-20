@@ -8,6 +8,7 @@ export const useTasks = () => {
     const [ taskList, setTaskList ] = useState([]);
     const [ error, setError ] = useState(null);
     const [ processing, setProcessing ] = useState(false);
+    const [taskRemoved, setTaskRemoved] = useState(null);
 
 
     const list = async () => {
@@ -27,15 +28,23 @@ export const useTasks = () => {
         }
 
         
-    const delete = async (taskToDelete) => {
+    const remove = async (taskToRemove) => {
         try{
         await axios
-        .delete(`${API_ENDPOINT}/tasks/${id}`, this.buildAuthHeader())
+        .delete(`${API_ENDPOINT}/tasks/${taskToRemove.id}`, buildAuthHeader());
+        setTaskList(taskList.filter(task => taskToRemove.id !== task.id));
+        setTaskRemoved(taskToRemove);
+
         }catch (error) {
             handleError(error);
 
         }
     }
+
+    const clearTaskRemoved = () => {
+        setTaskRemoved(null);
+    }
+
     
     const buildAuthHeader = () => {
         return {
@@ -47,7 +56,7 @@ export const useTasks = () => {
 
     const handleError = (error) => {
         console.log(error);
-        setError(resp.data.error);
+        const resp = error.response;
 
         if (resp && resp.status === 400 && resp.data) {
             setError(resp.data.error);
@@ -58,6 +67,6 @@ export const useTasks = () => {
         setProcessing(false);
     }
 
-    return { taskList, error, processing, list} ;
+    return { taskList, error, processing, taskRemoved, list, remove, clearTaskRemoved } ;
     
 }
