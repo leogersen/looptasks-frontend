@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import { Redirect } from 'react-router-dom';
@@ -12,6 +12,7 @@ const TaskListTable = () =>  {
 
     const auth = useContext(AuthContext);
     const tasks = useTasks();
+    const [ editId, setEditId ] = useState(0);
 
     useEffect(() => {
         if(auth.credentials.username !== null) {
@@ -31,6 +32,11 @@ const TaskListTable = () =>  {
         const onStatusChangeHandler = (taskToUpdate) => {
             taskToUpdate.done = !taskToUpdate.done;
             tasks.save(taskToUpdate, true);
+
+        }
+
+        const onEditHandler = (taskToEdit) => {
+            setEditId(taskToEdit.id);
 
         }
 
@@ -54,6 +60,10 @@ const TaskListTable = () =>  {
         if (!auth.isAuthenticated()) {
             return <Redirect to="/login" />;
             
+        }
+
+        if (editId > 0) {
+            return <Redirect to={`/form/${editId}`} />;
         }
 
 
@@ -97,7 +107,7 @@ const TaskListTable = () =>  {
                               className="btn btn-primary" 
                               type="button" 
                               value="Editar"
-                              onClick={() => false} />
+                              onClick={() => onEditHandler(task)} />
                               &nbsp;<input
                                   className="btn btn-danger"
                                   type="button"
